@@ -21,6 +21,15 @@ _Verwalte deine Abenteuer mit einem wunderschönen Quest Log im Modern Dark UI D
 
 ---
 
+
+<br>
+
+<div align="center">
+<img src="https://github.com/PhilsModules/phils-quest-tracker/blob/main/Cover.png" alt="Preview" width="800">
+</div>
+
+<br>
+
 <br>
 
 # <img src="https://flagcdn.com/48x36/gb.png" width="28" height="21" alt="EN"> English Instructions
@@ -162,3 +171,4 @@ See `LICENSE` file for details.
     <br><br>
     <p><i>Made with ❤️ for the Foundry VTT Community</i></p>
 </div>
+
