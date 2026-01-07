@@ -62,9 +62,11 @@ Phil's Quest Tracker wurde entwickelt um sich nahtlos in deine Welt einzufügen.
 2.  Gehe zum Reiter **Addon Modules**.
 3.  Klicke auf **Install Module**.
 4.  Füge die folgende **Manifest URL** unten ein:
-    ```
-    https://github.com/PhilsModules/phils-quest-tracker/releases/latest/download/module.json
-    ```
+
+   ```
+    https://github.com/PhilsModules/phils-quest-tracker/releases/latest/download/module.json
+   ```
+    
 5.  Klicke auf **Install**.
 
 ## 🚀 Erste Schritte
@@ -144,3 +146,4 @@ See `LICENSE` file for details.
     <p><i>Made with ❤️ for the Foundry VTT Community</i></p>
 
 </div>
+
