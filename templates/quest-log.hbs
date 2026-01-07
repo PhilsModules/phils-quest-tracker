@@ -1,0 +1,49 @@
+<div class="pqt-quest-log-container">
+  <header class="pqt-header">
+    <div class="pqt-filters">
+      <!-- Filters -->
+      {{#each filters}}
+        <button type="button" class="pqt-filter {{css}}" data-action="setFilter" data-filter="{{id}}">
+            {{localize label}}
+        </button>
+      {{/each}}
+    </div>
+    <div class="pqt-controls">
+      <button type="button" data-action="createQuest">
+        <i class="fas fa-plus"></i> {{localize "PQT.Action.Create"}}
+      </button>
+    </div>
+  </header>
+
+  <div class="pqt-quest-list">
+    {{#if hasQuests}}
+      {{#each sections}}
+        <h3 class="pqt-section-title">{{localize label}}</h3>
+        <div class="pqt-section-group">
+          {{#each quests}}
+            <div class="pqt-quest-card {{status}} {{category}}" data-action="openQuest" data-quest-id="{{id}}">
+              <div class="quest-status-marker"></div>
+              <div class="quest-info">
+                <h3 class="quest-title">{{title}}</h3>
+                <div class="quest-meta">
+                  {{#if source.name}}
+                    <span class="quest-giver"><i class="fas fa-user"></i> {{source.name}}</span>
+                  {{/if}}
+                </div>
+              </div>
+              <div class="quest-actions">
+                <button type="button" class="icon-btn delete-btn" data-action="deleteQuest" data-quest-id="{{id}}" data-tooltip="PQT.Action.Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      {{/each}}
+    {{else}}
+      <div class="pqt-empty-state">
+        <p>{{localize "PQT.Label.NoQuests"}}</p>
+      </div>
+    {{/if}}
+  </div>
+</div>

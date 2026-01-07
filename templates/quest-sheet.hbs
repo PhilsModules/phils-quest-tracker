@@ -1,0 +1,133 @@
+<div class="pqt-quest-sheet-container">
+  
+  <!-- Header / Title -->
+  <header class="pqt-sheet-header">
+    <div class="header-main">
+      <input type="text" name="title" value="{{quest.title}}" class="quest-title-input" placeholder="{{localize 'PQT.Field.Title'}}">
+      <div class="quest-status">
+        <select name="category" class="category-select">
+          {{selectOptions categories selected=quest.category localize=true}}
+        </select>
+        <select name="status">
+          {{selectOptions statuses selected=quest.status localize=true}}
+        </select>
+      </div>
+      <div class="quest-dates">
+        <div class="date-field">
+            <label>{{localize "PQT.Field.StartDate"}}</label>
+            <div class="input-with-tools">
+                <input type="text" name="dates.start" value="{{quest.dates.start}}" placeholder="DD. MM. YYYY">
+                <button type="button" class="tool-btn" data-action="pickDate" title="{{localize 'PQT.Action.PickDate'}}"><i class="fas fa-calendar-alt"></i></button>
+            </div>
+        </div>
+        <div class="sync-field">
+             <div class="visibility-control">
+                <label>{{localize "PQT.Field.Visibility"}}</label>
+                <select name="visibility">
+                    {{selectOptions visibilities selected=quest.visibility localize=true}}
+                </select>
+            </div>
+            <label class="checkbox-label">
+                <input type="checkbox" name="syncWithCalendar" {{checked quest.syncWithCalendar}}>
+                {{localize "PQT.Field.SyncCalendar"}}
+            </label>
+        </div>
+      </div>
+    </div>
+    <div class="header-meta">
+       <button type="button" class="icon-btn" data-action="saveQuest" title="{{localize 'PQT.Action.Save'}}"><i class="fas fa-save"></i></button>
+       <button type="button" class="icon-btn" data-action="exportQuest" title="Export to Markdown"><i class="fas fa-file-export"></i></button>
+    </div>
+  </header>
+
+  <div class="pqt-content">
+    
+    <!-- Source / Giver -->
+    <div class="pqt-section pqt-giver-section pqt-drop-zone">
+      <h3>{{localize "PQT.Field.Source"}}</h3>
+      <div class="givers-container">
+          {{#each quest.givers}}
+          <div class="giver-card" data-index="{{@index}}">
+             <img src="{{this.img}}" class="giver-img" title="{{this.name}}">
+             <div class="giver-info">
+                 <div class="giver-name">{{this.name}}</div>
+                 <input type="hidden" name="givers.{{@index}}.uuid" value="{{this.uuid}}">
+                 <input type="hidden" name="givers.{{@index}}.name" value="{{this.name}}">
+                 <input type="hidden" name="givers.{{@index}}.img" value="{{this.img}}">
+             </div>
+             {{#if ../isEditing}}
+             <button type="button" class="tool-btn delete-giver" data-action="deleteGiver" data-index="{{@index}}"><i class="fas fa-times"></i></button>
+             {{/if}}
+          </div>
+          {{else}}
+           <div class="empty-placeholder">{{localize "PQT.Label.DragActor"}}</div>
+          {{/each}}
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="pqt-section pqt-description-section">
+      <h3>{{localize "PQT.Field.Description"}}</h3>
+      <!-- We use a simple textarea for now, or rich text editor if possible? 
+           ApplicationV2 doesn't have a simple prosemirror helper yet in API? 
+           We can use standard foundry-rich-text custom element if available in V12 
+      -->
+      <div class="editor-container">
+          <prose-mirror name="description" data-document-u-u-i-d="{{document.uuid}}" value="{{quest.description}}"></prose-mirror>
+      </div>
+    </div>
+
+    <!-- Objectives -->
+    <div class="pqt-section pqt-objectives-section">
+      <div class="section-header">
+        <h3>{{localize "PQT.Field.Objectives"}}</h3>
+        <button type="button" class="icon-btn" data-action="addObjective"><i class="fas fa-plus"></i></button>
+      </div>
+      <ul class="objectives-list">
+        {{#each quest.objectives}}
+          <li class="objective-item">
+            <input type="checkbox" name="objectives.{{@index}}.completed" {{checked completed}}>
+            <input type="text" name="objectives.{{@index}}.text" value="{{text}}">
+            <button type="button" class="icon-btn delete" data-action="deleteObjective" data-id="{{id}}"><i class="fas fa-trash"></i></button>
+          </li>
+        {{/each}}
+      </ul>
+    </div>
+
+    <!-- Rewards -->
+    <div class="pqt-section pqt-rewards-section pqt-drop-zone">
+      <div class="section-header" style="justify-content: space-between; display: flex; align-items: center;">
+          <h3>{{localize "PQT.Field.Rewards"}}</h3>
+          <div class="xp-container" style="display: flex; align-items: center; gap: 5px;">
+               <label style="font-weight: bold; font-size: 0.9em;">XP:</label>
+               <input type="number" name="xp" value="{{quest.xp}}" style="width: 60px; height: 24px; text-align: center;" placeholder="0">
+          </div>
+      </div>
+      <ul class="rewards-list">
+        {{#each quest.rewards}}
+          <li class="reward-item">
+            <img src="{{img}}" class="reward-icon">
+            <span class="reward-name">{{name}}</span>
+            <input type="number" class="reward-qty-input" name="rewards.{{@index}}.quantity" value="{{quantity}}" min="1">
+            <input type="hidden" name="rewards.{{@index}}.name" value="{{name}}">
+            <input type="hidden" name="rewards.{{@index}}.img" value="{{img}}">
+            <input type="hidden" name="rewards.{{@index}}.type" value="{{type}}">
+            <input type="hidden" name="rewards.{{@index}}.uuid" value="{{uuid}}">
+            {{#if ../isEditing}}
+            <button type="button" class="tool-btn delete-reward" data-action="deleteReward" data-index="{{@index}}"><i class="fas fa-times"></i></button>
+            {{/if}}
+          </li>
+        {{else}}
+           <li class="empty-placeholder">{{localize "PQT.Label.DragItem"}}</li>
+        {{/each}}
+      </ul>
+    </div>
+
+  </div>
+
+  <footer class="pqt-footer">
+      <button type="button" data-action="saveAndClose">
+          <i class="fas fa-save"></i> {{localize "PQT.Action.Save"}}
+      </button>
+  </footer>
+</div>

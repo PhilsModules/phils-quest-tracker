@@ -1,0 +1,624 @@
+/* Phils Quest Tracker */
+@import url('https://fonts.googleapis.com/css2?family=Signika:wght@300;400;600&display=swap');
+
+:root {
+  --pqt-primary: #c5a059;
+  --pqt-primary-dim: rgba(197, 160, 89, 0.2);
+  --pqt-bg: rgba(20, 20, 25, 0.95);
+  --pqt-bg-card: rgba(255, 255, 255, 0.05);
+  --pqt-border: 1px solid #444;
+  --pqt-font: "Signika", sans-serif;
+  --pqt-text-main: #eee;
+  --pqt-text-muted: #aaa;
+  --pqt-danger: #e74c3c;
+  --pqt-success: #2ecc71;
+}
+
+.pqt-app .window-content {
+  background: var(--pqt-bg);
+  color: var(--pqt-text-main);
+  font-family: var(--pqt-font);
+  padding: 0;
+  backdrop-filter: blur(10px);
+}
+
+.pqt-app input, .pqt-app select, .pqt-app textarea {
+  background: rgba(0,0,0,0.3);
+  border: var(--pqt-border);
+  color: var(--pqt-text-main);
+  font-family: var(--pqt-font);
+}
+
+.pqt-app select option {
+  background: #222;
+  color: #eee;
+}
+
+.pqt-app input:focus, .pqt-app select:focus {
+  box-shadow: 0 0 5px var(--pqt-primary);
+  border-color: var(--pqt-primary);
+}
+
+.pqt-app button {
+  background: #333;
+  color: var(--pqt-primary);
+  border: 1px solid #555;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pqt-app button:hover {
+  background: #444;
+  color: #fff;
+  box-shadow: 0 0 5px rgba(255,255,255,0.2);
+}
+
+.icon-btn {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 5px;
+  line-height: normal;
+}
+.icon-btn:hover {
+  text-shadow: 0 0 5px var(--pqt-primary);
+}
+
+/* --- Quest Log --- */
+.pqt-quest-log-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pqt-header {
+  padding: 10px 15px;
+  border-bottom: 1px solid var(--pqt-primary);
+  background: rgba(0,0,0,0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pqt-filters {
+  display: flex;
+  gap: 15px;
+}
+
+.pqt-app .pqt-filter {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--pqt-text-muted);
+  font-weight: 600;
+  transition: all 0.2s;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.pqt-app .pqt-filter:hover {
+  color: #fff;
+  border-color: var(--pqt-primary-dim);
+}
+
+.pqt-app .pqt-filter.active {
+  color: #fff;
+  background: var(--pqt-primary-dim);
+  border: 1px solid var(--pqt-primary);
+  box-shadow: 0 0 3px var(--pqt-primary); /* Gold Glow */
+}
+
+.pqt-quest-list {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Category Grouping */
+.pqt-section-title {
+  border-bottom: 1px solid var(--pqt-primary);
+  color: var(--pqt-primary);
+  margin: 10px 0 5px;
+  padding-bottom: 2px;
+  font-size: 1.1em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pqt-section-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.pqt-quest-card {
+  background: var(--pqt-bg-card);
+  border: var(--pqt-border);
+  border-radius: 6px;
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.pqt-quest-card:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: var(--pqt-primary);
+  transform: translateX(2px);
+}
+
+/* Categories Styling */
+.pqt-quest-card.main { border-left: 4px solid #c5a059; }
+.pqt-quest-card.side { border-left: 4px solid #95a5a6; }
+.pqt-quest-card.personal { border-left: 4px solid #9b59b6; }
+
+.quest-status-marker {
+  width: 4px;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  /* Redundant if using category border, but maybe keep for status overlay? 
+     Let's rely on opacity or another marker for status if category takes the border.
+     Or use right border/dot for status.
+  */
+  display: none; /* Removing old marker in favor of category border */
+}
+
+/* Status Indication via text color or icon or opacity? */
+.pqt-quest-card.completed { opacity: 0.6; }
+.pqt-quest-card.completed .quest-title { text-decoration: line-through; color: var(--pqt-success); }
+.pqt-quest-card.failed .quest-title { color: var(--pqt-danger); }
+
+
+.quest-info {
+  flex: 1;
+  padding-left: 10px; /* Space from colored border */
+}
+
+.quest-title {
+  margin: 0;
+  font-size: 1.2em;
+  color: #eee;
+  border: none;
+}
+
+.quest-meta {
+  font-size: 0.9em;
+  color: var(--pqt-text-muted);
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.quest-dates {
+    display: flex;
+    gap: 15px;
+    margin-top: 8px;
+    align-items: center;
+    font-size: 0.9em;
+}
+
+.date-field {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.date-field input {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #444;
+    color: #eee;
+    padding: 2px 5px;
+    width: 120px;
+    font-family: inherit;
+}
+
+
+
+.sync-field input[type="checkbox"] {
+    margin: 0;
+}
+
+.input-with-tools {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.tool-btn {
+    background: transparent;
+    border: none;
+    color: var(--pqt-highlight);
+    cursor: pointer;
+    padding: 0 5px;
+    font-size: 1.1em;
+    line-height: 1;
+}
+
+.tool-btn:hover {
+    color: var(--pqt-highlight-bright);
+    text-shadow: 0 0 5px var(--pqt-highlight);
+}
+
+.sync-field {
+    display: flex; /* Override previous if any or ensure flex */
+    gap: 15px;
+}
+
+.visibility-control {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.visibility-control select {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #444;
+    color: #eee;
+    padding: 2px 5px;
+    font-family: inherit;
+    font-size: inherit;
+    width: auto;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    color: var(--pqt-text-muted);
+}
+
+.pqt-quest-sheet-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.pqt-footer {
+    padding: 10px 15px;
+    border-top: 1px solid var(--pqt-primary);
+    background: rgba(0,0,0,0.2);
+}
+
+.pqt-footer button {
+    width: 100%;
+    padding: 8px;
+    font-size: 1.1em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--pqt-primary);
+    border: 1px solid var(--pqt-primary);
+    background: rgba(0,0,0,0.4);
+}
+
+.pqt-footer button:hover {
+    background: var(--pqt-primary);
+    color: #fff;
+    box-shadow: 0 0 10px var(--pqt-primary);
+}
+
+/* --- Quest Sheet --- */
+.pqt-sheet-header {
+  padding: 15px;
+  background: linear-gradient(to bottom, rgba(197, 160, 89, 0.1), transparent);
+  border-bottom: 1px solid var(--pqt-primary);
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.header-main {
+  flex: 1;
+}
+
+.quest-title-input {
+  font-size: 1.5em;
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+  border-bottom: 2px solid var(--pqt-primary) !important;
+  padding: 5px !important;
+}
+
+.quest-status {
+  display: flex;
+  gap: 10px;
+}
+
+.quest-status select {
+  margin-top: 5px;
+  padding: 2px 5px;
+  font-size: 0.9em;
+  width: auto;
+}
+
+.category-select {
+  font-weight: bold;
+  color: var(--pqt-primary);
+}
+
+.pqt-content {
+  padding: 15px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pqt-section h3 {
+  border-bottom: 1px solid #555;
+  color: var(--pqt-primary);
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  letter-spacing: 1px;
+}
+
+/* Giver Section */
+.pqt-giver-section {
+  background: rgba(0,0,0,0.2);
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px dashed #555;
+  min-height: 80px;
+  display: block; 
+  height: auto;
+  overflow: hidden;
+  flex-shrink: 0; /* Prevent collapsing in flex parent */
+}
+
+.givers-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.giver-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(0,0,0,0.2);
+  padding: 5px 10px;
+  border-radius: 6px;
+  position: relative;
+  border-radius: 6px;
+  position: relative;
+  min-width: 200px;
+  max-width: 100%; /* Ensure it doesn't overflow */
+  flex: 1 1 200px; /* Grow and shrink, basis 200px */
+}
+
+.giver-card:hover {
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.giver-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--pqt-primary);
+  object-fit: cover;
+  background: #000;
+}
+
+.giver-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.giver-name {
+  font-size: 1.1em;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delete-giver {
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    color: #ff6b6b;
+    font-size: 1.2em; /* Bigger hitbox */
+    padding: 0 5px;
+}
+
+.giver-card:hover .delete-giver {
+    opacity: 1;
+}
+
+.empty-placeholder {
+  color: #666;
+  font-style: italic;
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+}
+
+/* Editor */
+.editor-container {
+  min-height: 200px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 5px;
+}
+
+/* Objectives */
+.pqt-objectives-section .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #555;
+  margin-bottom: 10px;
+}
+.pqt-objectives-section .section-header h3 { border: none; margin: 0; }
+
+.objectives-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.objective-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.2);
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+/* Custom Checkbox */
+.pqt-app input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--pqt-primary);
+  border-radius: 3px;
+  background: rgba(0,0,0,0.5);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  outline: none;
+}
+
+.pqt-app input[type="checkbox"]:checked {
+  background: var(--pqt-primary);
+  box-shadow: 0 0 8px var(--pqt-primary);
+}
+
+/* CSS-only Checkmark (Rotated L-shape) */
+.pqt-app input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #1a1a1a; /* Dark check on Gold bg */
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.pqt-app input[type="checkbox"]:hover {
+  border-color: #ffeeb0;
+  box-shadow: 0 0 5px var(--pqt-primary);
+}
+
+.objective-item input[type="text"] {
+  flex: 1;
+  border: none;
+  background: transparent;
+}
+
+/* Rewards */
+.pqt-rewards-section {
+  border: 1px dashed #555;
+  background: rgba(0,0,0,0.2);
+  padding: 10px;
+  border-radius: 6px;
+  min-height: 60px;
+  display: block; 
+  height: auto;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.rewards-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reward-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; /* Slightly more breathing room */
+  background: #222;
+  border: 1px solid #444;
+  padding: 4px 8px;
+  border-radius: 4px;
+  max-width: 100%; /* Prevent exceeding container */
+}
+
+.reward-icon {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000;
+  flex-shrink: 0; /* Prevent icon squishing */
+  object-fit: cover;
+  background: #000;
+}
+
+.reward-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1; /* Take available space but allow shrinking if needed */
+    min-width: 0; /* Allow flex item to shrink below content size */
+}
+
+.reward-qty {
+  color: var(--pqt-primary);
+  font-weight: bold;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.delete-reward {
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    color: #ff6b6b;
+    margin-left: 4px;
+    padding: 2px;
+    font-size: 0.9em;
+}
+
+.reward-item:hover .delete-reward {
+    opacity: 1;
+}
+
+.reward-qty-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--pqt-primary);
+    color: var(--pqt-primary);
+    width: 40px;
+    font-weight: bold;
+    text-align: center;
+    padding: 0;
+    margin-left: 5px;
+    font-family: inherit;
+}
+
+.reward-qty-input:focus {
+    outline: none;
+    border-color: #fff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #1a1a1a; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--pqt-primary); }

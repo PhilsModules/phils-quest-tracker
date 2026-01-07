@@ -1,0 +1,43 @@
+{
+  "PQT.Title": "Phils Quest Tracker",
+  "PQT.AppName": "Quest Log",
+  
+  "PQT.Status.Active": "Active",
+  "PQT.Status.Draft": "Draft",
+  "PQT.Status.Completed": "Completed",
+  "PQT.Status.Failed": "Failed",
+  "PQT.Status.Available": "Available",
+  
+  "PQT.Category.Main": "Main Quest",
+  "PQT.Category.Side": "Side Quest",
+  "PQT.Category.Personal": "Personal Quest",
+
+  "PQT.Field.Title": "Quest Title",
+  "PQT.Field.Description": "Description",
+  "PQT.Field.Source": "Quest Giver",
+  "PQT.Field.Objectives": "Objectives",
+  "PQT.Field.Rewards": "Rewards",
+  "PQT.Field.StartDate": "Start Date",
+  "PQT.Field.SyncCalendar": "Sync with Calendar",
+  "PQT.Field.Visibility": "Visibility",
+  "PQT.Visibility.Always": "Always Visible",
+  "PQT.Visibility.GM": "GM Only",
+  "PQT.Visibility.Date": "Visible on Start Date",
+  "PQT.Action.PickDate": "Pick Date from Calendar",
+  
+  "PQT.Action.Create": "New Quest",
+  "PQT.Action.Edit": "Edit",
+  "PQT.Action.Delete": "Delete",
+  "PQT.Action.Track": "Track",
+  "PQT.Action.Untrack": "Untrack",
+  "PQT.Action.Save": "Save Quest",
+  "PQT.Action.Cancel": "Cancel",
+  
+  "PQT.Label.NoQuests": "No quests found.",
+  "PQT.Label.DragActor": "Drag Actor Here",
+  "PQT.Label.DragItem": "Drag Item Here",
+  
+  "PQT.Message.QuestCreated": "New Quest Created: {title}",
+  "PQT.Message.QuestCompleted": "Quest Completed: {title}",
+  "PQT.Message.ConfirmDelete": "Are you sure you want to delete this quest?"
+}

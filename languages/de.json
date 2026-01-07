@@ -1,0 +1,43 @@
+{
+  "PQT.Title": "Phils Quest Tracker",
+  "PQT.AppName": "Quest Logbuch",
+  
+  "PQT.Status.Active": "Aktiv",
+  "PQT.Status.Draft": "Entwurf",
+  "PQT.Status.Completed": "Abgeschlossen",
+  "PQT.Status.Failed": "Fehlgeschlagen",
+  "PQT.Status.Available": "Verfügbar",
+  
+  "PQT.Category.Main": "Hauptquest",
+  "PQT.Category.Side": "Nebenquest",
+  "PQT.Category.Personal": "Persönliche Quest",
+
+  "PQT.Field.Title": "Questtitel",
+  "PQT.Field.Description": "Beschreibung",
+  "PQT.Field.Source": "Questgeber",
+  "PQT.Field.Objectives": "Ziele",
+  "PQT.Field.Rewards": "Belohnungen",
+  "PQT.Field.StartDate": "Startdatum",
+  "PQT.Field.SyncCalendar": "Mit Kalender synchronisieren",
+  "PQT.Field.Visibility": "Sichtbarkeit",
+  "PQT.Visibility.Always": "Immer sichtbar",
+  "PQT.Visibility.GM": "Nur Spielleiter",
+  "PQT.Visibility.Date": "Ab Startdatum sichtbar",
+  "PQT.Action.PickDate": "Datum aus Kalender wählen",
+  
+  "PQT.Action.Create": "Neue Quest",
+  "PQT.Action.Edit": "Bearbeiten",
+  "PQT.Action.Delete": "Löschen",
+  "PQT.Action.Track": "Verfolgen",
+  "PQT.Action.Untrack": "Nicht mehr verfolgen",
+  "PQT.Action.Save": "Speichern",
+  "PQT.Action.Cancel": "Abbrechen",
+  
+  "PQT.Label.NoQuests": "Keine Quests gefunden.",
+  "PQT.Label.DragActor": "Akteur hierher ziehen",
+  "PQT.Label.DragItem": "Gegenstand hierher ziehen",
+  
+  "PQT.Message.QuestCreated": "Neue Quest erstellt: {title}",
+  "PQT.Message.QuestCompleted": "Quest abgeschlossen: {title}",
+  "PQT.Message.ConfirmDelete": "Bist du sicher, dass du diese Quest löschen möchtest?"
+}
