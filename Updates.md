@@ -1,5 +1,13 @@
 # Update Log
 
+## v1.3.1
+
+- **Feature**: **New Notes System**: Split notes into dedicated sections. **Player Notes** are visible to all quest observers, while **GM Notes** remain strictly private to the GM.
+- **Feature**: **Tabbed Interface**: The Quest Sheet is now organized into "Overview", "Notes", and "Rewards" tabs for better usability.
+- **Improvement**: **Player Quest Creation**: Fixed permission issues allowing players to seamlessly create and manage their own quests.
+- **Fix**: **Calendar Synchronization**: Fixed an issue where players syncing quests to the calendar would cause errors. This is now securely handled by the GM client.
+- **Fix**: **Deletion Sync**: Quest deletion now updates the Quest Log immediately for all connected players.
+
 ## v1.3.0
 
 - **Feature**: **Drag & Drop Reordering**: You can now reorder Goals (Objectives) within a Quest and reorder Quests within the Quest Log using drag & drop.
