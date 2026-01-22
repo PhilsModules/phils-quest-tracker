@@ -21,7 +21,10 @@
         <h3 class="pqt-section-title">{{localize label}}</h3>
         <div class="pqt-section-group">
           {{#each quests}}
-            <div class="pqt-quest-card {{status}} {{category}}" data-action="openQuest" data-quest-id="{{id}}">
+            <div class="pqt-quest-card {{status}} {{category}}" draggable="true" data-action="openQuest" data-quest-id="{{id}}">
+              {{#if isGM}}
+              <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+              {{/if}}
               <div class="quest-status-marker"></div>
               <div class="quest-info">
                 <h3 class="quest-title">{{title}}</h3>

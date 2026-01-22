@@ -22,7 +22,7 @@
   backdrop-filter: blur(10px);
 }
 
-.pqt-app input, .pqt-app select, .pqt-app textarea {
+.pqt-app .window-content input, .pqt-app .window-content select, .pqt-app .window-content textarea {
   background: rgba(0,0,0,0.3);
   border: var(--pqt-border);
   color: var(--pqt-text-main);
@@ -39,7 +39,7 @@
   border-color: var(--pqt-primary);
 }
 
-.pqt-app button {
+.pqt-app .window-content button {
   background: #333;
   color: var(--pqt-primary);
   border: 1px solid #555;
@@ -47,7 +47,7 @@
   transition: all 0.2s;
 }
 
-.pqt-app button:hover {
+.pqt-app .window-content button:hover {
   background: #444;
   color: #fff;
   box-shadow: 0 0 5px rgba(255,255,255,0.2);
@@ -146,6 +146,19 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  display: flex; /* Ensure flex layout for handle */
+  align-items: center; /* Vertically center handle */
+}
+
+.pqt-quest-card .drag-handle {
+    margin-right: 10px;
+    font-size: 1.2em;
+    cursor: grab;
+    color: var(--pqt-text-muted);
+}
+
+.pqt-quest-card .drag-handle:hover {
+    color: var(--pqt-primary);
 }
 
 .pqt-quest-card:hover {
@@ -165,14 +178,11 @@
   position: absolute;
   left: 0;
   top: 0;
-  /* Redundant if using category border, but maybe keep for status overlay? 
-     Let's rely on opacity or another marker for status if category takes the border.
-     Or use right border/dot for status.
-  */
-  display: none; /* Removing old marker in favor of category border */
+  /* Redundant if using category border, but maybe keep for status overlay? */
+  display: none; 
 }
 
-/* Status Indication via text color or icon or opacity? */
+
 .pqt-quest-card.completed { opacity: 0.6; }
 .pqt-quest-card.completed .quest-title { text-decoration: line-through; color: var(--pqt-success); }
 .pqt-quest-card.failed .quest-title { color: var(--pqt-danger); }
@@ -289,8 +299,13 @@
     background: rgba(0,0,0,0.2);
 }
 
-.pqt-footer button {
-    width: 100%;
+.footer-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.pqt-app .footer-actions .btn-save {
+    flex: 7;
     padding: 8px;
     font-size: 1.1em;
     font-weight: bold;
@@ -303,10 +318,30 @@
     background: rgba(0,0,0,0.4);
 }
 
-.pqt-footer button:hover {
+.pqt-app .footer-actions .btn-save:hover {
     background: var(--pqt-primary);
     color: #fff;
     box-shadow: 0 0 10px var(--pqt-primary);
+}
+
+.pqt-app .footer-actions .btn-delete {
+    flex: 3;
+    padding: 8px;
+    font-size: 1.1em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #e74c3c; /* Brighter Red */
+    border: 1px solid #e74c3c;
+    background: rgba(0,0,0,0.4);
+}
+
+.pqt-app .footer-actions .btn-delete:hover {
+    background: #e74c3c;
+    color: #fff;
+    box-shadow: 0 0 10px #e74c3c;
 }
 
 /* --- Quest Sheet --- */
@@ -329,7 +364,17 @@
   border: none !important;
   background: transparent !important;
   border-bottom: 2px solid var(--pqt-primary) !important;
+  border-bottom: 2px solid var(--pqt-primary) !important;
   padding: 5px !important;
+}
+
+.quest-title-readonly {
+  font-size: 1.5em;
+  width: 100%;
+  margin: 0;
+  padding: 5px 0;
+  border-bottom: 2px solid transparent; /* Keep layout consistent */
+  color: #fff;
 }
 
 .quest-status {
@@ -343,6 +388,36 @@
   font-size: 0.9em;
   width: auto;
 }
+
+.header-control {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.header-control label {
+    font-size: 0.8em;
+    color: var(--pqt-text-muted);
+    margin-bottom: 2px;
+}
+
+.header-control select {
+    margin-top: 0;
+    width: 100%; /* Ensure it fills container if needed or auto */
+    min-width: 120px;
+}
+
+.readonly-value {
+    display: inline-block;
+    padding: 2px 5px;
+    font-size: 0.9em;
+    color: #eee;
+    margin-top: 1px;
+}
+
+.category-value.main { color: #c5a059; }
+.category-value.side { color: #95a5a6; }
+.category-value.personal { color: #9b59b6; }
 
 .category-select {
   font-weight: bold;
@@ -457,6 +532,23 @@
   padding: 5px;
 }
 
+.pqt-editor-preview {
+    min-height: 200px;
+    padding: 10px;
+    background: transparent;
+    color: var(--pqt-text-main);
+    line-height: 1.5;
+    white-space: pre-wrap; /* Preserve basic formatting if no HTML */
+}
+
+.pqt-editor-preview p {
+    margin: 0 0 10px;
+}
+
+.pqt-editor-preview *:last-child {
+    margin-bottom: 0;
+}
+
 /* Objectives */
 .pqt-objectives-section .section-header {
   display: flex;
@@ -474,6 +566,25 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+}
+
+/* Drag & Drop Styles */
+.drag-handle {
+    color: var(--pqt-text-muted);
+    cursor: grab;
+    padding-right: 5px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.drag-handle:hover, .objective-item:hover .drag-handle {
+    opacity: 1;
+    color: var(--pqt-primary);
+}
+
+.objective-item.drag-over {
+    border: 1px dashed var(--pqt-primary);
+    background: rgba(197, 160, 89, 0.1);
 }
 
 .objective-item {
@@ -622,3 +733,78 @@
 ::-webkit-scrollbar-track { background: #1a1a1a; }
 ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--pqt-primary); }
+
+/* --- Tabs --- */
+.pqt-tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.pqt-tabs .tabs {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid var(--pqt-primary);
+    padding: 0 10px;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.pqt-tabs .tabs .item {
+    padding: 10px 15px;
+    color: var(--pqt-text-muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    font-weight: bold;
+}
+
+.pqt-tabs .tabs .item:hover {
+    color: #fff;
+    text-shadow: 0 0 5px var(--pqt-primary);
+}
+
+.pqt-tabs .tabs .item.active {
+    color: var(--pqt-primary);
+    border-bottom-color: var(--pqt-primary);
+    background: rgba(197, 160, 89, 0.05);
+}
+
+.pqt-tabs .tabs .item i {
+    margin-right: 5px;
+}
+
+/* --- Notes Area --- */
+.notes-area {
+    width: 100%;
+    min-height: 200px;
+    background: rgba(0,0,0,0.2) !important;
+    border: 1px solid #444;
+    padding: 10px;
+    color: #eee;
+    font-family: inherit;
+    resize: none;
+    line-height: 1.5;
+}
+
+.notes-area:focus {
+    outline: none;
+    border-color: var(--pqt-primary);
+    background: rgba(0,0,0,0.3) !important;
+}
+
+/* Adjust content padding for tabs */
+.pqt-content {
+    padding: 15px;
+}
+
+.pqt-content .tab {
+    display: none;
+    height: 100%;
+}
+
+.pqt-content .tab.active {
+    display: block;
+}
+

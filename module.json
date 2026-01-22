@@ -1,0 +1,54 @@
+{
+  "id": "phils-quest-tracker",
+  "title": "Phils Quest Tracker",
+  "version": "1.3.2",
+  "compatibility": {
+    "minimum": "12",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "Phil",
+      "url": "https://github.com/PhilsModules",
+      "discord": "._.phil"
+    }
+  ],
+  "relationships": {
+    "requires": [],
+    "recommends": [
+      {
+        "id": "phils-day-night-cycle",
+        "type": "module",
+        "title": "Phils Day/Night Cycle",
+        "compatibility": {
+           "minimum": "3.0.0"
+        }
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/quest-manager.js",
+    "scripts/apps/quest-log-app.js",
+    "scripts/apps/quest-sheet.js",
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/style.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "languages/en.json"
+    },
+    {
+      "lang": "de",
+      "name": "Deutsch",
+      "path": "languages/de.json"
+    }
+  ],
+  "description": "An immersive Quest Tracker with Quest Log, XP Rewards, and dynamic Calendar integration. Visualize your adventures with a premium, drag-and-drop interface.",
+  "url": "https://github.com/PhilsModules/phils-quest-tracker",
+  "manifest": "https://github.com/PhilsModules/phils-quest-tracker/releases/latest/download/module.json",
+  "download": "https://github.com/PhilsModules/phils-quest-tracker/releases/latest/download/module.zip"
+}

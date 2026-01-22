@@ -1,5 +1,11 @@
 # Update Log
 
+## v1.3.2
+
+- **Fix**: **Objective Permissions**: Players (observers) can no longer mistakenly edit objectives.
+- **Fix**: **UI Polish**: Fixed the alignment of the window close button and cleaned up the UI code.
+- **Improvement**: **Code Cleanup**: Removed residual debug comments and improved code readability.
+
 ## v1.3.1
 
 - **Feature**: **New Notes System**: Split notes into dedicated sections. **Player Notes** are visible to all quest observers, while **GM Notes** remain strictly private to the GM.

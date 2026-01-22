@@ -3,131 +3,287 @@
   <!-- Header / Title -->
   <header class="pqt-sheet-header">
     <div class="header-main">
+      {{#if isEditing}}
       <input type="text" name="title" value="{{quest.title}}" class="quest-title-input" placeholder="{{localize 'PQT.Field.Title'}}">
+      {{else}}
+      <h1 class="quest-title-readonly">{{quest.title}}</h1>
+      {{/if}}
+      
       <div class="quest-status">
-        <select name="category" class="category-select">
-          {{selectOptions categories selected=quest.category localize=true}}
-        </select>
-        <select name="status">
-          {{selectOptions statuses selected=quest.status localize=true}}
-        </select>
+        <!-- Level / Type -->
+        <div class="header-control">
+             <label>{{localize 'PQT.Field.TypeLabel'}}</label>
+             {{#if isEditing}}
+             <select name="category" class="category-select">
+                {{selectOptions categories selected=quest.category localize=true}}
+             </select>
+             {{else}}
+             <span class="readonly-value category-value {{quest.category}}">{{localize (lookup categories quest.category)}}</span>
+             {{/if}}
+        </div>
+
+        <!-- Status -->
+        <div class="header-control">
+             <label>{{localize 'PQT.Field.StatusLabel'}}</label>
+             {{#if isEditing}}
+             <select name="status">
+                {{selectOptions statuses selected=quest.status localize=true}}
+             </select>
+             {{else}}
+             <span class="readonly-value">{{localize (lookup statuses quest.status)}}</span>
+             {{/if}}
+        </div>
+
+        <!-- Access Level Dropdown (GM Only) -->
+        {{#if isGM}}
+        <div class="header-control">
+            <label>{{localize 'PQT.Field.AccessLabel'}}</label>
+            <select class="pqt-access-select">
+                {{selectOptions accessLevels selected=currentAccess localize=true}}
+            </select>
+        </div>
+        {{/if}}
       </div>
       <div class="quest-dates">
+        {{#if (or isEditing quest.dates.start)}}
         <div class="date-field">
             <label>{{localize "PQT.Field.StartDate"}}</label>
+            {{#if isEditing}}
             <div class="input-with-tools">
                 <input type="text" name="dates.start" value="{{quest.dates.start}}" placeholder="DD. MM. YYYY">
                 <button type="button" class="tool-btn" data-action="pickDate" title="{{localize 'PQT.Action.PickDate'}}"><i class="fas fa-calendar-alt"></i></button>
             </div>
+            {{else}}
+            <span class="readonly-value">{{quest.dates.start}}</span>
+            {{/if}}
         </div>
+        {{/if}}
+        {{#if (or isGM isEditing)}}
         <div class="sync-field">
+             {{#if isGM}}
              <div class="visibility-control">
                 <label>{{localize "PQT.Field.Visibility"}}</label>
                 <select name="visibility">
                     {{selectOptions visibilities selected=quest.visibility localize=true}}
                 </select>
             </div>
+            {{/if}}
             <label class="checkbox-label">
                 <input type="checkbox" name="syncWithCalendar" {{checked quest.syncWithCalendar}}>
                 {{localize "PQT.Field.SyncCalendar"}}
             </label>
         </div>
+        {{/if}}
       </div>
     </div>
     <div class="header-meta">
-       <button type="button" class="icon-btn" data-action="saveQuest" title="{{localize 'PQT.Action.Save'}}"><i class="fas fa-save"></i></button>
        <button type="button" class="icon-btn" data-action="exportQuest" title="Export to Markdown"><i class="fas fa-file-export"></i></button>
     </div>
   </header>
 
-  <div class="pqt-content">
-    
-    <!-- Source / Giver -->
-    <div class="pqt-section pqt-giver-section pqt-drop-zone">
-      <h3>{{localize "PQT.Field.Source"}}</h3>
-      <div class="givers-container">
-          {{#each quest.givers}}
-          <div class="giver-card" data-index="{{@index}}">
-             <img src="{{this.img}}" class="giver-img" title="{{this.name}}">
-             <div class="giver-info">
-                 <div class="giver-name">{{this.name}}</div>
-                 <input type="hidden" name="givers.{{@index}}.uuid" value="{{this.uuid}}">
-                 <input type="hidden" name="givers.{{@index}}.name" value="{{this.name}}">
-                 <input type="hidden" name="givers.{{@index}}.img" value="{{this.img}}">
-             </div>
-             {{#if ../isEditing}}
-             <button type="button" class="tool-btn delete-giver" data-action="deleteGiver" data-index="{{@index}}"><i class="fas fa-times"></i></button>
-             {{/if}}
-          </div>
-          {{else}}
-           <div class="empty-placeholder">{{localize "PQT.Label.DragActor"}}</div>
-          {{/each}}
-      </div>
-    </div>
+  <!-- Navigation Tabs -->
+  <article class="pqt-tabs">
+      <nav class="tabs" data-group="primary">
+          <a class="item {{#if (eq activeTab 'overview')}}active{{/if}}" data-action="changeTab" data-tab="overview" data-group="primary"><i class="fas fa-book"></i> {{localize "PQT.Tab.Overview"}}</a>
+          <a class="item {{#if (eq activeTab 'notes')}}active{{/if}}" data-action="changeTab" data-tab="notes" data-group="primary"><i class="fas fa-sticky-note"></i> {{localize "PQT.Tab.Notes"}}</a>
+          <a class="item {{#if (eq activeTab 'rewards')}}active{{/if}}" data-action="changeTab" data-tab="rewards" data-group="primary"><i class="fas fa-trophy"></i> {{localize "PQT.Tab.Rewards"}}</a>
+      </nav>
 
-    <!-- Description -->
-    <div class="pqt-section pqt-description-section">
-      <h3>{{localize "PQT.Field.Description"}}</h3>
-      <!-- We use a simple textarea for now, or rich text editor if possible? 
-           ApplicationV2 doesn't have a simple prosemirror helper yet in API? 
-           We can use standard foundry-rich-text custom element if available in V12 
-      -->
-      <div class="editor-container">
-          <prose-mirror name="description" data-document-u-u-i-d="{{document.uuid}}" value="{{quest.description}}"></prose-mirror>
-      </div>
-    </div>
+      <section class="content pqt-scrollable">
+          
+        <!-- Overview Tab -->
+        <div class="tab {{#if (eq activeTab 'overview')}}active{{/if}}" data-tab="overview" data-group="primary">
+            
+            <!-- Source / Giver -->
+            <div class="pqt-section pqt-giver-section pqt-drop-zone">
+              <h3>{{localize "PQT.Field.Source"}}</h3>
+              <div class="givers-container">
+                  {{#each quest.givers}}
+                  <div class="giver-card" data-index="{{@index}}">
+                     <img src="{{this.img}}" class="giver-img" title="{{this.name}}">
+                     <div class="giver-info">
+                         <div class="giver-name">{{this.name}}</div>
+                         <input type="hidden" name="givers.{{@index}}.uuid" value="{{this.uuid}}">
+                         <input type="hidden" name="givers.{{@index}}.name" value="{{this.name}}">
+                         <input type="hidden" name="givers.{{@index}}.img" value="{{this.img}}">
+                     </div>
+                     {{#if ../isEditing}}
+                     <button type="button" class="tool-btn delete-giver" data-action="deleteGiver" data-index="{{@index}}"><i class="fas fa-times"></i></button>
+                     {{/if}}
+                  </div>
+                  {{else}}
+                   <div class="empty-placeholder">{{localize "PQT.Label.DragActor"}}</div>
+                  {{/each}}
+              </div>
+            </div>
 
-    <!-- Objectives -->
-    <div class="pqt-section pqt-objectives-section">
-      <div class="section-header">
-        <h3>{{localize "PQT.Field.Objectives"}}</h3>
-        <button type="button" class="icon-btn" data-action="addObjective"><i class="fas fa-plus"></i></button>
-      </div>
-      <ul class="objectives-list">
-        {{#each quest.objectives}}
-          <li class="objective-item">
-            <input type="checkbox" name="objectives.{{@index}}.completed" {{checked completed}}>
-            <input type="text" name="objectives.{{@index}}.text" value="{{text}}">
-            <button type="button" class="icon-btn delete" data-action="deleteObjective" data-id="{{id}}"><i class="fas fa-trash"></i></button>
-          </li>
-        {{/each}}
-      </ul>
-    </div>
+            <!-- Description -->
+            <div class="pqt-section pqt-description-section">
+              <div class="section-header" style="justify-content: space-between; display: flex; align-items: center;">
+                 <h3>{{localize "PQT.Field.Description"}}</h3>
+                 {{#if isEditing}}
+                 <button type="button" class="tool-btn" data-action="toggleEditor" data-field="description" title="{{#if editingMode.description}}Save{{else}}Edit{{/if}}">
+                     <i class="fas {{#if editingMode.description}}fa-save{{else}}fa-edit{{/if}}"></i>
+                 </button>
+                 {{/if}}
+              </div>
+              <div class="editor-container">
+                  {{#if editingMode.description}}
+                  <prose-mirror name="description" data-document-u-u-i-d="{{document.uuid}}" value="{{quest.description}}"></prose-mirror>
+                  {{else}}
+                  <div class="pqt-editor-preview">{{{description}}}</div>
+                  {{/if}}
+              </div>
+            </div>
 
-    <!-- Rewards -->
-    <div class="pqt-section pqt-rewards-section pqt-drop-zone">
-      <div class="section-header" style="justify-content: space-between; display: flex; align-items: center;">
-          <h3>{{localize "PQT.Field.Rewards"}}</h3>
-          <div class="xp-container" style="display: flex; align-items: center; gap: 5px;">
-               <label style="font-weight: bold; font-size: 0.9em;">XP:</label>
-               <input type="number" name="xp" value="{{quest.xp}}" style="width: 60px; height: 24px; text-align: center;" placeholder="0">
-          </div>
-      </div>
-      <ul class="rewards-list">
-        {{#each quest.rewards}}
-          <li class="reward-item">
-            <img src="{{img}}" class="reward-icon">
-            <span class="reward-name">{{name}}</span>
-            <input type="number" class="reward-qty-input" name="rewards.{{@index}}.quantity" value="{{quantity}}" min="1">
-            <input type="hidden" name="rewards.{{@index}}.name" value="{{name}}">
-            <input type="hidden" name="rewards.{{@index}}.img" value="{{img}}">
-            <input type="hidden" name="rewards.{{@index}}.type" value="{{type}}">
-            <input type="hidden" name="rewards.{{@index}}.uuid" value="{{uuid}}">
-            {{#if ../isEditing}}
-            <button type="button" class="tool-btn delete-reward" data-action="deleteReward" data-index="{{@index}}"><i class="fas fa-times"></i></button>
+            <!-- Objectives -->
+            <div class="pqt-section pqt-objectives-section">
+              <div class="section-header">
+                <h3>{{localize "PQT.Field.Objectives"}}</h3>
+                {{#if isEditing}}
+                <button type="button" class="icon-btn" data-action="addObjective"><i class="fas fa-plus"></i></button>
+                {{/if}}
+              </div>
+              <ul class="objectives-list">
+                {{#each quest.objectives}}
+                  <li class="objective-item" {{#if ../isEditing}}draggable="true"{{/if}} data-index="{{@index}}">
+                    {{#if ../isEditing}}
+                    <i class="fas fa-grip-vertical drag-handle"></i>
+                    <input type="checkbox" name="objectives.{{@index}}.completed" {{checked completed}}>
+                    <input type="text" name="objectives.{{@index}}.text" value="{{text}}">
+                    <button type="button" class="icon-btn delete" data-action="deleteObjective" data-id="{{id}}"><i class="fas fa-trash"></i></button>
+                    {{else}}
+                    <i class="fas {{#if completed}}fa-check-square{{else}}fa-square{{/if}}" style="color: var(--pqt-primary); margin-right: 5px;"></i>
+                    <span class="{{#if completed}}completed{{/if}}">{{text}}</span>
+                    {{/if}}
+                  </li>
+                {{/each}}
+              </ul>
+            </div>
+        </div>
+
+        <!-- Notes Tab -->
+        <div class="tab {{#if (eq activeTab 'notes')}}active{{/if}}" data-tab="notes" data-group="primary">
+            
+            <!-- Player Notes (Always Visible if Access >= Observer) -->
+            <div class="pqt-section">
+                <div class="section-header" style="justify-content: space-between; display: flex; align-items: center;">
+                    <h3>{{localize "PQT.Field.PlayerNotes"}}</h3>
+                    <button type="button" class="tool-btn" data-action="toggleEditor" data-field="player" title="{{#if editingMode.player}}Save{{else}}Edit{{/if}}">
+                        <i class="fas {{#if editingMode.player}}fa-save{{else}}fa-edit{{/if}}"></i>
+                    </button>
+                </div>
+                <div class="editor-container">
+                    {{#if editingMode.player}}
+                    <prose-mirror name="notes.player" data-document-u-u-i-d="{{document.uuid}}" value="{{playerNotes}}"></prose-mirror>
+                    {{else}}
+                    <div class="pqt-editor-preview">{{{playerNotesEnriched}}}</div>
+                    {{/if}}
+                </div>
+            </div>
+
+            <!-- GM Notes (GM Only) -->
+            {{#if isGM}}
+            <div class="pqt-section">
+                <div class="section-header" style="justify-content: space-between; display: flex; align-items: center;">
+                    <h3>{{localize "PQT.Field.GMNotes"}}</h3>
+                    <button type="button" class="tool-btn" data-action="toggleEditor" data-field="gm" title="{{#if editingMode.gm}}Save{{else}}Edit{{/if}}">
+                        <i class="fas {{#if editingMode.gm}}fa-save{{else}}fa-edit{{/if}}"></i>
+                    </button>
+                </div>
+                 <div class="editor-container">
+                    {{#if editingMode.gm}}
+                    <prose-mirror name="notes.gm" data-document-u-u-i-d="{{document.uuid}}" value="{{gmNotes}}"></prose-mirror>
+                    {{else}}
+                    <div class="pqt-editor-preview">{{{gmNotesEnriched}}}</div>
+                    {{/if}}
+                </div>
+            </div>
             {{/if}}
-          </li>
-        {{else}}
-           <li class="empty-placeholder">{{localize "PQT.Label.DragItem"}}</li>
-        {{/each}}
-      </ul>
-    </div>
 
-  </div>
+        </div>
+
+        <!-- Rewards Tab -->
+        <div class="tab {{#if (eq activeTab 'rewards')}}active{{/if}}" data-tab="rewards" data-group="primary">
+             <!-- Rewards -->
+             <!-- Always show basic rewards if GM or Completed or Revealed -->
+             {{#if (or isGM (eq quest.status "completed") hasRevealedRewards)}}
+             <div class="pqt-section pqt-rewards-section pqt-drop-zone">
+               <div class="section-header" style="justify-content: space-between; display: flex; align-items: center;">
+                   <h3>{{localize "PQT.Field.Rewards"}}</h3>
+                   {{#if (or isGM (eq quest.status "completed"))}}
+                   <div class="rewards-values" style="display: flex; align-items: center; gap: 10px;">
+                        <div class="gold-container" style="display: flex; align-items: center; gap: 5px;">
+                            <label style="font-weight: bold; font-size: 0.9em; color: #ffd700;"><i class="fas fa-coins"></i></label>
+                            {{#if isGM}}
+                            <input type="number" name="gold" value="{{quest.gold}}" style="width: 60px; height: 24px; text-align: center;" placeholder="0">
+                            {{else}}
+                            <span style="color: #ffd700; font-weight: bold;">{{quest.gold}}</span>
+                            {{/if}}
+                       </div>
+                       <div class="xp-container" style="display: flex; align-items: center; gap: 5px;">
+                            <label style="font-weight: bold; font-size: 0.9em;">XP:</label>
+                            {{#if isGM}}
+                            <input type="number" name="xp" value="{{quest.xp}}" style="width: 60px; height: 24px; text-align: center;" placeholder="0">
+                            {{else}}
+                            <span style="font-weight: bold;">{{quest.xp}} XP</span>
+                            {{/if}}
+                       </div>
+                   </div>
+                   {{/if}}
+               </div>
+               <ul class="rewards-list">
+                 {{#each quest.rewards}}
+                   {{#if (or ../isGM (eq ../quest.status "completed") revealed)}}
+                   <li class="reward-item" style="{{#if (and ../isGM revealed)}}border-color: #ffd700;{{/if}}">
+                     <img src="{{img}}" class="reward-icon">
+                     <span class="reward-name">{{name}}</span>
+                     {{#if ../isEditing}}
+                     <input type="number" class="reward-qty-input" name="rewards.{{@index}}.quantity" value="{{quantity}}" min="1">
+                     {{else}}
+                     <span class="reward-qty">x{{quantity}}</span>
+                     {{/if}}
+                     
+                     <input type="hidden" name="rewards.{{@index}}.name" value="{{name}}">
+                     <input type="hidden" name="rewards.{{@index}}.img" value="{{img}}">
+                     <input type="hidden" name="rewards.{{@index}}.type" value="{{type}}">
+                     <input type="hidden" name="rewards.{{@index}}.uuid" value="{{uuid}}">
+                     <input type="hidden" name="rewards.{{@index}}.revealed" value="{{revealed}}">
+         
+                     {{#if ../isEditing}}
+                     <div class="reward-actions" style="display: flex; align-items: center; margin-left: 5px;">
+                          <button type="button" class="tool-btn toggle-visibility" data-action="toggleRewardVisibility" data-index="{{@index}}" title="{{#if revealed}}Hide from Players{{else}}Show to Players{{/if}}">
+                               <i class="fas {{#if revealed}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
+                          </button>
+                          <button type="button" class="tool-btn delete-reward" data-action="deleteReward" data-index="{{@index}}"><i class="fas fa-times"></i></button>
+                     </div>
+                     {{/if}}
+                   </li>
+                   {{/if}}
+                 {{else}}
+                    {{#if ../isGM}}
+                    <li class="empty-placeholder">{{localize "PQT.Label.DragItem"}}</li>
+                    {{/if}}
+                 {{/each}}
+               </ul>
+             </div>
+             {{else}}
+             <div class="pqt-section">
+                <p>{{localize "PQT.Label.NoRewardsVisible"}}</p>
+             </div>
+             {{/if}}
+        </div>
+      </section>
+  </article>
 
   <footer class="pqt-footer">
-      <button type="button" data-action="saveAndClose">
-          <i class="fas fa-save"></i> {{localize "PQT.Action.Save"}}
-      </button>
+      <div class="footer-actions">
+           <button type="button" class="btn-save" data-action="saveAndClose">
+              <i class="fas fa-save"></i> {{localize "PQT.Action.Save"}}
+          </button>
+          <button type="button" class="btn-delete" data-action="deleteQuest">
+              <i class="fas fa-trash"></i> {{localize "PQT.Action.Delete"}}
+          </button>
+      </div>
   </footer>
 </div>

@@ -44,12 +44,22 @@ export class QuestLogApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // Default to 'active'
     const filter = this.currentFilter;
     
+    // Sort by Sort Value
+    quests.sort((a, b) => {
+        const da = a.getFlag('phils-quest-tracker', 'data') || {};
+        const db = b.getFlag('phils-quest-tracker', 'data') || {};
+        return (da.sort || 0) - (db.sort || 0);
+    });
+
     quests = quests.filter(q => {
         const data = q.getFlag('phils-quest-tracker', 'data');
         if (data.status !== filter) return false;
         
         // Permission Check (Non-GM)
         if (!game.user.isGM) {
+             // Explicitly hide GM Only quests regardless of permissions (e.g. Authors)
+             if (data.visibility === 'gm') return false;
+             
              if (!data.visibleTo || data.visibleTo.length === 0) return true;
              return data.visibleTo.includes(game.user.id);
         }
@@ -112,9 +122,8 @@ export class QuestLogApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.render();
     
     // Open Quest Sheet immediately
-    if (quest) {
-        new QuestSheet(quest).render(true);
-    }
+    // Handled by Hook in main.js to avoid double-opening
+
   }
 
 
@@ -122,10 +131,7 @@ export class QuestLogApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const questId = target.dataset.questId;
     const quest = game.journal.get(questId);
     if (quest) {
-       // Import dynamic to avoid circular dependencies if any, or just standard import at top
-       // Since we have Modules, hoisting works.
-       // But we need to import QuestSheet class.
-       // Assuming it's imported at top.
+
        new QuestSheet(quest).render(true);
     }
   }
@@ -141,8 +147,7 @@ export class QuestLogApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const btn = $(`<button class="quest-log-btn"><i class="fas fa-scroll"></i> ${game.i18n.localize("PQT.AppName")}</button>`);
     
-    // Styling to match Foundry header buttons usually
-    // Or just custom styling. Foundry header buttons are usually just <button> inside header-actions.
+
     
     btn.on('click', () => {
       new QuestLogApp().render(true);
@@ -172,6 +177,97 @@ export class QuestLogApp extends HandlebarsApplicationMixin(ApplicationV2) {
       if (filter) {
           this.currentFilter = filter;
           this.render();
+      }
+  }
+
+  /* ------------------------------------------- */
+  /*  Quest Drag & Drop                          */
+  /* ------------------------------------------- */
+  
+  _attachPartListeners(partId, htmlElement, options) {
+      super._attachPartListeners(partId, htmlElement, options);
+      
+      if (partId === 'main') {
+          const cards = htmlElement.querySelectorAll('.pqt-quest-card');
+          for (const card of cards) {
+              card.addEventListener('dragstart', this._onDragStartQuest.bind(this));
+              card.addEventListener('dragover', this._onDragOverQuest.bind(this));
+              card.addEventListener('drop', this._onDropQuest.bind(this));
+          }
+      }
+  }
+
+  _onDragStartQuest(event) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", JSON.stringify({
+          type: "Quest",
+          uuid: event.currentTarget.dataset.questId
+      }));
+  }
+
+  _onDragOverQuest(event) {
+      event.preventDefault();
+      // Only allow if dragging Quest
+      event.dataTransfer.dropEffect = "move";
+  }
+
+  async _onDropQuest(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const dataStr = event.dataTransfer.getData("text/plain");
+      if (!dataStr) return;
+      
+      try {
+          const data = JSON.parse(dataStr);
+          if (data.type !== "Quest") return;
+          
+          const draggedId = data.uuid;
+          const targetCard = event.currentTarget.closest('.pqt-quest-card');
+          if (!targetCard) return;
+          
+          const targetId = targetCard.dataset.questId;
+          if (draggedId === targetId) return;
+
+
+          const container = targetCard.closest('.pqt-section-group');
+          if (!container) return;
+          
+          const cardNodes = Array.from(container.querySelectorAll('.pqt-quest-card'));
+          const ids = cardNodes.map(c => c.dataset.questId);
+          
+          const fromIndex = ids.indexOf(draggedId);
+          const toIndex = ids.indexOf(targetId);
+          
+          if (fromIndex === -1 || toIndex === -1) return; // Should not happen
+          
+          // Reorder array
+          ids.splice(fromIndex, 1);
+          ids.splice(toIndex, 0, draggedId);
+          
+
+          const updates = ids.map((id, index) => {
+              // We need to find the Journal Entry
+              const entry = game.journal.get(id);
+              if (!entry) return null;
+              
+              const currentData = entry.getFlag(QuestManager.ID, QuestManager.FLAG) || {};
+
+              return { 
+                  _id: id, 
+                  [`flags.${QuestManager.ID}.${QuestManager.FLAG}.sort`]: index * 10 
+              };
+          }).filter(u => u);
+
+          // JournalEntry.updateDocuments(updates)
+
+          await JournalEntry.updateDocuments(updates);
+          
+          // Render App
+          this.render();
+
+      } catch (e) {
+          console.error("PQT | Quest Drop Error", e);
       }
   }
 }

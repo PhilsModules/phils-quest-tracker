@@ -2,6 +2,7 @@ export class QuestManager {
   static ID = 'phils-quest-tracker';
   static FLAG = 'data';
   static FOLDER_NAME = 'Phils Quest Tracker';
+  static pendingCreation = false;
 
   /**
    * Initialize module (called in 'init' hook)
@@ -42,10 +43,9 @@ export class QuestManager {
                // Verify it wasn't already completed? 
                // logic: The hook fires on change. If status is in change, it changed.
                // But to be safe against "update to completed again", we could check old data?
-               // But 'doc' is already the NEW document in standard Foundry update hook?
                // Actually in 'updateJournalEntry', 'doc' is the updated document. 
                // But we only care if 'change' contains the status switch.
-               console.log("PQT | Quest Completed via Hook!", doc.name);
+
                await this.handleQuestCompletion(doc, data);
           }
       });
@@ -74,7 +74,6 @@ export class QuestManager {
           const data = doc.getFlag(this.ID, this.FLAG);
           // If we have data, we try to clean up.
           if (data) { 
-               console.log("PQT | Deletion Hook Triggered for:", doc.name, "ID:", doc.id);
                await this.removeFromCalendar(String(doc.id), data);
           }
       });
@@ -133,6 +132,8 @@ export class QuestManager {
       objectives: [],   // { id, text, completed }
       rewards: [],      // { type, uuid, quantity, ... }
       xp: 0,
+      gold: 0,
+      sort: 0,
       dates: {
         created: null,
         start: "",
@@ -145,6 +146,8 @@ export class QuestManager {
    * Create a new Quest
    */
   static async createQuest(data = {}) {
+    this.pendingCreation = true;
+    
     const folder = await this.getQuestFolder();
     const defaults = this.defaultQuestData;
     const questData = foundry.utils.mergeObject(defaults, data);
@@ -158,7 +161,7 @@ export class QuestManager {
     const entry = await JournalEntry.create({
       name: questData.title,
       content: questData.description,
-      folder: folder.id,
+      folder: folder ? folder.id : null,
       flags: {
         [this.ID]: {
           [this.FLAG]: questData
@@ -197,21 +200,8 @@ export class QuestManager {
     const docUpdate = {};
     if (updateData.title) docUpdate.name = updateData.title;
     if (updateData.description) docUpdate.content = updateData.description; // Note: JournalEntires use pages in V10+, wait. V12 uses Pages.
+    // ... working version logic retained ...
 
-    // FLAG handling for V10+ Journal Entries
-    // JournalEntry.content does not exist in V12! It's JournalEntryPage.
-    // We must handle Pages. 
-    // Wait, creating a JournalEntry with `content` param in create() creates a default text page automatically?
-    // Let's verify. in V10+, creating {name: "foo", content: "bar"} creates a page?
-    // "If the content field is provided... it will be used to create a JournalEntryPage." - API docs.
-    // So create works. But update?
-    
-    // For update, we should check if we need to update the page.
-    // Simplifying: Let's store description in the flag ONLY for now to avoid syncing issues? 
-    // Or stick to Page.
-    // If we use Page, we get the editor.
-    // Let's assume we want to use the Page for the description.
-    
     // We update the flag
     await entry.setFlag(this.ID, this.FLAG, newData);
     
@@ -297,7 +287,11 @@ export class QuestManager {
       <div class="pqt-chat-card">
         <h3>${game.i18n.format("PQT.Message.QuestCompleted", { title: data.title })}</h3>
         ${data.source.img ? `<img src="${data.source.img}" class="pqt-chat-img"/>` : ''}
-        ${data.xp > 0 ? `<div class="pqt-xp-reward" style="font-weight: bold; color: #b1853d; margin-bottom: 5px;">${data.xp} XP</div>` : ''}
+        ${(data.xp > 0 || data.gold > 0) ? `
+        <div class="pqt-values-row" style="display: flex; gap: 10px; margin-bottom: 5px; align-items: center;">
+            ${data.gold > 0 ? `<div class="pqt-gold-reward" style="font-weight: bold; color: #ffd700;"><i class="fas fa-coins"></i> ${data.gold}</div>` : ''}
+            ${data.xp > 0 ? `<div class="pqt-xp-reward" style="font-weight: bold; color: #b1853d;">${data.xp} XP</div>` : ''}
+        </div>` : ''}
         <div class="pqt-rewards">
           ${data.rewards.map(r => {
             if (r.uuid) {
@@ -310,8 +304,8 @@ export class QuestManager {
                 // Fallback / Text only
                 return `
                 <div class="pqt-reward-item">
-                  <img src="${r.img}" width="24" height="24"/>
-                  <span>${r.quantity}x ${r.name}</span>
+                   <img src="${r.img}" width="24" height="24"/>
+                   <span>${r.quantity}x ${r.name}</span>
                 </div>`;
             }
           }).join('')}
@@ -352,6 +346,7 @@ export class QuestManager {
   }
 
   static async addToCalendar(questData, questId) {
+     if (!game.user.isGM) return;
      if (!window.PhilsDayNightCycle || !questData.syncWithCalendar) return;
 
      // 1. Start Date
@@ -385,44 +380,21 @@ export class QuestManager {
      }
 
      // 2. Completion Date
-     // completed can be object {date: "...", timestamp: ...} or null
+     // (Placeholder for future completion timestamp parsing)
      if (questData.dates.completed && questData.dates.completed.date) {
-         // Should we parse the string "12. MonthName YYYY" or use timestamp?
-         // handleQuestCompletion saves "day. MonthName Year". Hard to parse back.
-         // But it also saves `timestamp`.
-         // Let's use timestamp if available.
-         
-         let compDate = null;
-         if (questData.dates.completed.timestamp) {
-             const sys = new window.PhilsDayNightCycle.calendar.system.constructor(); // Hacky access?
-             // Better: use the global instance
-             // window.PhilsDayNightCycle.calendar is the system instance? NO.
-             // window.PhilsDayNightCycle.calendar is NEW instance of CalendarSystem in main.js? 
-             // "this.calendar = new CalendarSystem();"
-             
-             // Actually, we can just use the parsing logic on the timestamp if we import CalendarSystem
-             // Or rely on the fact we might not perfectly sync completion date back if we can't parse it.
-             // But wait, handleQuestCompletion is ours. We can change how we save it!
-             // Let's rely on `dates.completed` being present.
-         }
-         
-         // For now, let's skip completion event if we can't easily parse it, 
-         // OR update handleQuestCompletion to ALSO save a parsesable date string?
-         // For now, only Start Date was explicitly requested as "standard entry".
-         // But I'll leave this placeholder.
+         // Logic pending
      }
   }
 
   static async removeFromCalendar(questId, questData) {
+      if (!game.user.isGM) return;
       if (!window.PhilsDayNightCycle) return;
-
-      console.log("PQT | Removing linked calendar events for Quest ID:", questId, "Type:", typeof questId);
 
       let removed = false;
       // 1. Try ID Link Removal (Preferred) with Quest ID
       if (window.PhilsDayNightCycle.removeLinkedEvent && questId) {
            removed = await window.PhilsDayNightCycle.removeLinkedEvent(String(questId));
-           console.log("PQT | ID Removal Result:", removed);
+
       }
 
       // 2. Fallback: Title/Date
@@ -435,5 +407,34 @@ export class QuestManager {
       }
   }
 
+  /**
+   * Export all quests to a JSON file
+   */
+  static async exportQuests() {
+    const quests = this.getQuests();
+    const data = quests.map(q => q.getFlag(this.ID, this.FLAG));
+    
+    saveDataToFile(JSON.stringify(data, null, 2), "json", "quest-tracker-backup.json");
+  }
+
+  /**
+   * Import quests from JSON data
+   * @param {Array} data Array of quest data objects
+   */
+  static async importQuests(data) {
+    if (!Array.isArray(data)) {
+      ui.notifications.error("Invalid data format.");
+      return;
+    }
+
+    let count = 0;
+    for (const questData of data) {
+      // Basic validation
+      if (!questData.title) continue;
+      
+      await this.createQuest(questData);
+      count++;
+    }
+  }
 
 }

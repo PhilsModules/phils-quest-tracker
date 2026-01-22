@@ -24,6 +24,21 @@
   "PQT.Visibility.GM": "Nur Spielleiter",
   "PQT.Visibility.Date": "Ab Startdatum sichtbar",
   "PQT.Action.PickDate": "Datum aus Kalender wählen",
+
+  "PQT.Field.Access": "Zugriff",
+  "PQT.Access.Observer": "Spielleiter",
+  "PQT.Access.Owner": "Jeder",
+  "PQT.Field.AccessLabel": "Bearbeitbar von",
+  "PQT.Field.TypeLabel": "Quest Typ",
+  "PQT.Field.StatusLabel": "Quest Status",
+
+  "PQT.Tab.Overview": "Übersicht",
+  "PQT.Tab.Notes": "Notizen",
+  "PQT.Tab.Rewards": "Belohnungen",
+
+  "PQT.Field.PlayerNotes": "Spielernotizen",
+  "PQT.Field.GMNotes": "Spielleiternotizen",
+
   
   "PQT.Action.Create": "Neue Quest",
   "PQT.Action.Edit": "Bearbeiten",
@@ -39,5 +54,21 @@
   
   "PQT.Message.QuestCreated": "Neue Quest erstellt: {title}",
   "PQT.Message.QuestCompleted": "Quest abgeschlossen: {title}",
-  "PQT.Message.ConfirmDelete": "Bist du sicher, dass du diese Quest löschen möchtest?"
+  "PQT.Message.ConfirmDelete": "Bist du sicher, dass du diese Quest löschen möchtest?",
+  "PQT.Message.SavingToGM": "Speichere Änderungen beim Spielleiter...",
+  "PQT.Label.NoRewardsVisible": "Keine Belohnungen sichtbar.",
+
+  "PQT.Settings.Title": "Quest Tracker Einstellungen",
+  "PQT.Settings.Description": "Verwalte deine Quest-Daten.",
+  "PQT.Settings.ExportLabel": "Quests Exportieren",
+  "PQT.Settings.ExportButton": "Daten Exportieren",
+  "PQT.Settings.ExportHint": "Lade ein Backup aller aktuellen Quests als JSON-Datei herunter.",
+  "PQT.Settings.ImportLabel": "Quests Importieren",
+  "PQT.Settings.ImportButton": "Daten Importieren",
+  "PQT.Settings.ImportHint": "Lade eine zuvor exportierte JSON-Datei hoch. Importe werden als neue Quests hinzugefügt.",
+  "PQT.Settings.ExportSuccess": "Quests erfolgreich exportiert.",
+  "PQT.Settings.ImportSuccess": "Quests erfolgreich importiert.",
+  
+  "PQT.Keybinding.Toggle.Name": "Quest Logbuch umschalten",
+  "PQT.Keybinding.Toggle.Hint": "Öffnet oder schließt das Quest Logbuch."
 }

@@ -6,13 +6,72 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
   constructor(journalEntry, options = {}) {
     super(options);
     this.document = journalEntry;
+
+    this._onDeleteBound = this._onDelete.bind(this);
+    this._onUpdateBound = this._onUpdate.bind(this);
+    Hooks.on("deleteJournalEntry", this._onDeleteBound);
+    Hooks.on("updateJournalEntry", this._onUpdateBound);
+
+    this.tabGroups = { primary: "overview" };
+
+    this.editingMode = {
+        description: false,
+        gm: false,
+        player: false
+    };
+  }
+
+  /* ------------------------------------------- */
+  /*  Life Cycle                                 */
+  /* ------------------------------------------- */
+
+  _onRender(context, options) {
+      super._onRender(context, options);
+      
+      const accessSelect = this.element.querySelector('.pqt-access-select');
+      if (accessSelect) {
+          accessSelect.addEventListener('change', async (event) => {
+              const newLevel = Number(event.target.value);
+              const currentLevel = this.document.ownership.default ?? 0;
+              
+              const updates = { "ownership.default": newLevel };
+              
+              if (newLevel === 0) {
+                  updates[`flags.${QuestManager.ID}.${QuestManager.FLAG}.visibility`] = "gm";
+              } else {
+                  updates[`flags.${QuestManager.ID}.${QuestManager.FLAG}.visibility`] = "always";
+              }
+
+              if (newLevel !== currentLevel) {
+                  await this.document.update(updates);
+              }
+          });
+      }
+  }
+
+  async close(options = {}) {
+      Hooks.off("deleteJournalEntry", this._onDeleteBound);
+      Hooks.off("updateJournalEntry", this._onUpdateBound);
+      return super.close(options);
+  }
+
+  _onDelete(document, options, userId) {
+      if (document.uuid === this.document.uuid) {
+          this.close();
+      }
+  }
+
+  _onUpdate(document, changes, options, userId) {
+      if (document.uuid === this.document.uuid) {
+          this.render();
+      }
   }
 
   static DEFAULT_OPTIONS = {
     tag: 'form',
     classes: ['pqt-app', 'pqt-quest-sheet'],
     window: {
-      title: 'PQT.Title', // Dynamic title in _prepareContext
+      title: 'PQT.Title',
       icon: 'fas fa-book-open',
       resizable: true,
       controls: []
@@ -22,21 +81,22 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
       height: 850
     },
     actions: {
-      saveQuest: QuestSheet.saveQuest,
-      deleteObjective: QuestSheet.deleteObjective,
-      addObjective: QuestSheet.addObjective,
-      deleteReward: QuestSheet.deleteReward,
-
-
-      exportQuest: QuestSheet.exportQuest,
-      pickDate: QuestSheet.pickDate,
-
-      deleteGiver: QuestSheet.deleteGiver,
-      saveAndClose: QuestSheet.saveAndClose
+      saveQuest: this.prototype.saveQuest,
+      deleteObjective: this.prototype.deleteObjective,
+      addObjective: this.prototype.addObjective,
+      deleteReward: this.prototype.deleteReward,
+      deleteQuest: this.prototype.deleteQuest,
+      exportQuest: this.prototype.exportQuest,
+      pickDate: this.prototype.pickDate,
+      deleteGiver: this.prototype.deleteGiver,
+      toggleRewardVisibility: this.prototype.toggleRewardVisibility,
+      saveAndClose: this.prototype.saveAndClose,
+      changeTab: this.prototype.changeTab,
+      toggleEditor: this.prototype.toggleEditor
     },
     form: {
-      handler: QuestSheet.formHandler,
-      submitOnChange: false,
+      handler: this.prototype.formHandler,
+      submitOnChange: true,
       closeOnSubmit: false
     },
     dragDrop: [{ dragSelector: null, dropSelector: ".pqt-drop-zone" }] // V2 specific drag drop?
@@ -45,7 +105,7 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
   static PARTS = {
     main: {
       template: 'modules/phils-quest-tracker/templates/quest-sheet.hbs',
-      scrollable: ['.pqt-content']
+      scrollable: ['.pqt-scrollable']
     }
   };
 
@@ -54,31 +114,46 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   async _prepareContext(options) {
+    if (this.document.uuid) {
+        const freshDoc = await fromUuid(this.document.uuid);
+        if (freshDoc) this.document = freshDoc;
+    }
+    
     const data = this.document.getFlag(QuestManager.ID, QuestManager.FLAG) || QuestManager.defaultQuestData;
     
     // Enrich HTML description
-    // Handle V12 deprecation of global TextEditor
     const editorCls = foundry.applications?.ux?.TextEditor || TextEditor;
     const description = await editorCls.enrichHTML(data.description, {
       secrets: this.document.isOwner,
+      async: true
+    });
+    
+    const gmNotesEnriched = await editorCls.enrichHTML(data.notes?.gm || "", {
+      secrets: this.document.isOwner,
+      async: true
+    });
+
+    const playerNotesEnriched = await editorCls.enrichHTML(data.notes?.player || "", {
+      secrets: this.document.isOwner, // Or check Observer?
       async: true
     });
 
     // Migration: Source -> Givers
     if (data.source && data.source.uuid && (!data.givers || data.givers.length === 0)) {
         data.givers = [data.source];
-        // We don't save back immediately to avoid spamming updates on open, 
-        // but it will be saved on next edit.
     }
-    // Ensure givers is array
     if (!data.givers) data.givers = [];
 
     return {
       quest: data,
       document: this.document,
       description: description,
+      gmNotesEnriched: gmNotesEnriched,
+      playerNotesEnriched: playerNotesEnriched,
+      editingMode: this.editingMode,
       isGM: game.user.isGM,
-      isEditing: this.document.isOwner, // Always allow editing for owners
+      isEditing: this.document.isOwner,
+      hasRevealedRewards: data.rewards?.some(r => r.revealed) || false,
       statuses: {
         active: "PQT.Status.Active",
         completed: "PQT.Status.Completed",
@@ -95,26 +170,43 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
         main: "PQT.Category.Main",
         side: "PQT.Category.Side",
         personal: "PQT.Category.Personal"
-      }
+      },
+      accessLevels: {
+          "2": "PQT.Access.Observer",
+          "3": "PQT.Access.Owner"
+      },
+      currentAccess: String(this.document.ownership.default === 0 ? 2 : (this.document.ownership.default ?? 0)),
+      gmNotes: data.notes?.gm || "",
+      playerNotes: data.notes?.player || "",
+      activeTab: this.tabGroups.primary
     };
   }
 
-  /* ------------------------------------------- */
-  /*  Event Listeners & Actions                  */
-  /* ------------------------------------------- */
+  async toggleEditor(event, target) {
+      const field = target.dataset.field; // "description", "gm", "player"
+      if (!field) return;
 
-  static async pickDate(event, target) {
+      const isEditing = this.editingMode[field];
+      
+      if (isEditing) {
+          // We are turning it OFF. Save first.
+          await this.submit();
+      }
+      
+      this.editingMode[field] = !isEditing;
+      this.render();
+  }
+
+
+
+  async pickDate(event, target) {
       if (!window.PhilsDayNightCycle) return ui.notifications.warn("Phils Day Night Cycle not active.");
       
       const app = new window.PhilsDayNightCycle.PhilsCalendarApp({
           onDateSelect: (dateKey) => {
-              // dateKey is YYYY-M-D (or MM-DD)
-              // We want to format it nicely for the input: DD. MM. YYYY
               const [y, m, d] = dateKey.split('-').map(Number);
               const formatted = `${String(d).padStart(2, '0')}. ${String(m+1).padStart(2, '0')}. ${y}`;
               
-              // Set value in form (using standard DOM access since we are in a V2 listener)
-              // target is the button.
               const input = target.closest('.date-field').querySelector('input');
               if (input) {
                   input.value = formatted;
@@ -126,30 +218,46 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
       app.render(true);
   }
 
-  /* ------------------------------------------- */
-  /*  Event Handlers                             */
-  /* ------------------------------------------- */
+  async changeTab(event, target) {
+      await this.submit(); // Save pending changes (including ProseMirror)
+      
+      const tab = target.dataset.tab;
+      const group = target.dataset.group;
+      if (tab && group) {
+          this.tabGroups[group] = tab;
+          this.render();
+      }
+  }
 
-  static async saveQuest(event, target) {
+
+
+  async saveQuest(event, target) {
     await this.submit();
   }
 
-  static async saveAndClose(event, target) {
+  async saveAndClose(event, target) {
     await this.submit();
     this.close();
   }
 
+  async deleteQuest(event, target) {
+      const confirm = await foundry.applications.api.DialogV2.confirm({
+          window: { title: game.i18n.localize("PQT.Title.DeleteQuest") || "Delete Quest" },
+          content: `<p>${game.i18n.localize("PQT.Message.DeleteQuestConfirm") || "Are you sure you want to delete this quest?"}</p>`,
+          modal: true
+      });
+
+      if (confirm) {
+          await this.document.delete();
+          // Auto-close hook handles closing
+      }
+  }
 
 
-  static async addObjective(event, target) {
-    // We need to grab current form data to not lose edits
-    // Fix for V13 deprecation of global FormDataExtended
+
+  async addObjective(event, target) {
     const FormDataExt = foundry.applications?.ux?.FormDataExtended || FormDataExtended;
-    const formData = new FormDataExt(this.element).object;
-    
-    // But adding a row is UI state.
-    // Ideally we save, add, render.
-    await this.submit(); // Save current state
+    await this.submit();
     
     // Add objective to flag
     const data = this.document.getFlag(QuestManager.ID, QuestManager.FLAG) || {};
@@ -160,22 +268,23 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
         objectives = objectives ? Object.values(objectives) : [];
     }
 
+
     objectives.push({ id: foundry.utils.randomID(), text: "", completed: false });
     
     await this.document.setFlag(QuestManager.ID, QuestManager.FLAG, { objectives });
-    this.render();
+    await this._renderAndPreserveScroll();
   }
 
-  static async deleteObjective(event, target) {
-    if (this instanceof QuestSheet) await this.submit(); // Ensure context
+  async deleteObjective(event, target) {
+    if (this instanceof QuestSheet) await this.submit(); 
     const id = target.dataset.id;
     const data = this.document.getFlag(QuestManager.ID, QuestManager.FLAG);
     const objectives = data.objectives.filter(o => o.id !== id);
     await this.document.setFlag(QuestManager.ID, QuestManager.FLAG, { objectives });
-    this.render();
+    await this._renderAndPreserveScroll();
   }
 
-  static async deleteGiver(event, target) {
+  async deleteGiver(event, target) {
       if (this instanceof QuestSheet) await this.submit();
       const index = Number(target.dataset.index);
       const data = this.document.getFlag(QuestManager.ID, QuestManager.FLAG);
@@ -185,11 +294,12 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
       if (givers && givers[index]) {
           givers.splice(index, 1);
           await this.document.setFlag(QuestManager.ID, QuestManager.FLAG, { givers: givers });
-          this.render();
+          await this.document.setFlag(QuestManager.ID, QuestManager.FLAG, { givers: givers });
+          await this._renderAndPreserveScroll();
       }
       }
 
-  static async deleteReward(event, target) {
+  async deleteReward(event, target) {
       if (this instanceof QuestSheet) await this.submit();
       const index = Number(target.dataset.index);
       const data = this.document.getFlag(QuestManager.ID, QuestManager.FLAG);
@@ -199,11 +309,42 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
       if (rewards && rewards[index]) {
           rewards.splice(index, 1);
           await this.document.setFlag(QuestManager.ID, QuestManager.FLAG, { rewards: rewards });
-          this.render();
+          await this._renderAndPreserveScroll();
+      }
+  }
+
+  async toggleRewardVisibility(event, target) {
+      if (this instanceof QuestSheet) await this.submit(); // Ensure context is correct instance
+      const index = Number(target.dataset.index);
+      
+      const data = this.document.getFlag(QuestManager.ID, QuestManager.FLAG);
+      let rewards = data.rewards || [];
+      if (!Array.isArray(rewards)) rewards = Object.values(rewards);
+
+      if (rewards && rewards[index]) {
+          // Toggle boolean
+          rewards[index].revealed = !rewards[index].revealed;
+          
+          await this.document.setFlag(QuestManager.ID, QuestManager.FLAG, { rewards: rewards });
+          await this._renderAndPreserveScroll();
+      }
+  }
+
+
+
+  async _renderAndPreserveScroll() {
+      const scrollContainer = this.element.querySelector('.pqt-content');
+      const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+      
+      await this.render();
+      
+      const newContainer = this.element.querySelector('.pqt-content');
+      if (newContainer) {
+          newContainer.scrollTop = scrollTop;
       }
   }
   
-  static async exportQuest(event, target) {
+  async exportQuest(event, target) {
     // Export to Markdown
     const data = this.document.getFlag(QuestManager.ID, QuestManager.FLAG);
     const content = `# ${data.title}\n\n${data.description}\n\n## Objectives\n${data.objectives.map(o => `- [${o.completed ? 'x' : ' '}] ${o.text}`).join('\n')}`;
@@ -211,34 +352,29 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
     saveDataToFile(content, "text/markdown", `${data.title}.md`);
   }
 
-  /* ------------------------------------------- */
-  /*  Form Submission                            */
-  /* ------------------------------------------- */
+
   
-  static async formHandler(event, form, formData) {
+  async formHandler(event, form, formData) {
     const data = formData.object;
     // Process form data back into structure
     // We need to map "objectives.0.text" -> array
     const expanded = foundry.utils.expandObject(data);
     
-    // Safety: Ensure objectives are saved as array (expandObject might make it an object if indices are sparse)
     if (expanded.objectives && !Array.isArray(expanded.objectives)) {
         expanded.objectives = Object.values(expanded.objectives);
     }
 
-    // Safety: Ensure rewards are saved as array
     if (expanded.rewards && !Array.isArray(expanded.rewards)) {
         expanded.rewards = Object.values(expanded.rewards);
     }
 
-    // Safety: Ensure givers are saved as array
     if (expanded.givers && !Array.isArray(expanded.givers)) {
         expanded.givers = Object.values(expanded.givers);
     }
     
     // Update Flags
-    // We might need to handle the 'description' separately if using ProseMirror, 
-    // but standard textarea works for now.
+    
+    const updateData = {};
     
     // Merge with existing to keep other fields
     const current = this.document.getFlag(QuestManager.ID, QuestManager.FLAG) || {};
@@ -246,28 +382,67 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
     // Auto-setup for Date Visibility
     if (expanded.visibility === 'date' && current.visibility !== 'date') {
         expanded.syncWithCalendar = true;
-        // Only force available if we are "starting fresh" or user expectation
-        // User said: "must be categorized as available"
+        
         if (expanded.status === 'active') {
              expanded.status = 'available';
         }
     }
+
+    // Handle Notes (Nested) - Ensure structure exists
+    if (expanded.notes) {
+        if (!current.notes) current.notes = {};
+    }
     
-    const update = foundry.utils.mergeObject(current, expanded);
+    // Check if user has permission to update the document (Flags)
+    if (!this.document.isOwner) {
+        // ... (Observer Logic) ...
+        const currentNotes = current.notes?.player || "";
+        const newNotes = expanded.notes?.player || "";
+        
+        if (newNotes !== currentNotes) {
+             console.log(`PQT | Player Note Change Detected for ${this.document.name}`, {old: currentNotes, new: newNotes});
+             
+             const gmUser = game.users.find(u => u.isGM && u.active);
+             if (!gmUser) {
+                 ui.notifications.warn("Cannot save Player Notes: No GM is currently connected.");
+                 console.warn("PQT | Cannot save Player Notes via Socket: No GM connected.");
+                 return;
+             }
+
+             // ui.notifications.info(game.i18n.localize("PQT.Message.SavingToGM") || "Saving notes to GM...");
+             game.socket.emit('module.phils-quest-tracker', {
+                 type: 'updateQuestFlags',
+                 questId: this.document.id,
+                 updateData: { "notes.player": newNotes },
+                 userId: game.user.id
+             });
+        } else {
+             console.log("PQT | Player Notes unchanged or empty update.");
+        }
+        return;
+    }
     
-    await this.document.setFlag(QuestManager.ID, QuestManager.FLAG, update);
+    // Prepare Flag Update
+    // Calculate the difference between current flags and form data
+    const changes = foundry.utils.diffObject(current, expanded);
     
-    // Sync Title/Name
-    if (update.title && update.title !== this.document.name) {
-      await this.document.update({ name: update.title });
-      // Update the Window Title explicitly
-      this.render(); 
+    // Only update if there are actual changes
+    if (!foundry.utils.isEmpty(changes)) {
+         console.log("PQT | Updating Flags:", changes);
+         await this.document.update({
+             [`flags.${QuestManager.ID}.${QuestManager.FLAG}`]: changes
+         });
+         
+         // Sync Title/Name if changed
+         if (changes.title && changes.title !== this.document.name) {
+             await this.document.update({ name: changes.title });
+         }
+    } else {
+        console.log("PQT | No flag changes detected. Skipping flag update.");
     }
   }
 
-  /* ------------------------------------------- */
-  /*  Drag & Drop                                */
-  /* ------------------------------------------- */
+
   
   _onDragOver(event) {
     // Standard HTML5 dragover
@@ -299,7 +474,7 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
                 img: actor.img
             });
             await this.document.setFlag(QuestManager.ID, QuestManager.FLAG, { givers });
-            this.render();
+            await this._renderAndPreserveScroll();
         }
       }
     } else if (data.type === "Item") {
@@ -316,7 +491,7 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
            quantity: 1
          });
          await this.document.setFlag(QuestManager.ID, QuestManager.FLAG, { rewards });
-         this.render();
+         await this._renderAndPreserveScroll();
       }
     }
   }
@@ -324,11 +499,10 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
   /** @override */
   _attachPartListeners(partId, htmlElement, options) {
     super._attachPartListeners(partId, htmlElement, options);
-    // Bind Drag & Drop manually since V2 dragDrop handler might differ or be simpler
     htmlElement.addEventListener("dragover", this._onDragOver.bind(this));
     htmlElement.addEventListener("drop", this._onDrop.bind(this));
 
-    // Visibility Change Listener for Auto-Configuration
+    // Visibility Change Listener
     const visibilitySelect = htmlElement.querySelector('select[name="visibility"]');
     if (visibilitySelect) {
         visibilitySelect.addEventListener('change', (event) => {
@@ -340,7 +514,7 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
                     syncCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
                 }
 
-                // 2. Auto-Set Status to Available (if active or draft)
+                // 2. Auto-Set Status to Available
                 const statusSelect = htmlElement.querySelector('select[name="status"]');
                 if (statusSelect && (statusSelect.value === 'active' || statusSelect.value === 'draft')) {
                     statusSelect.value = 'available';
@@ -349,5 +523,91 @@ export class QuestSheet extends HandlebarsApplicationMixin(ApplicationV2) {
             }
         });
     }
+
+    // Drag & Drop for Objectives
+    const objList = htmlElement.querySelectorAll('.objective-item');
+    for (const li of objList) {
+        li.addEventListener('dragstart', this._onDragStartObjective.bind(this));
+        li.addEventListener('dragover', this._onDragOverObjective.bind(this));
+        li.addEventListener('dragleave', this._onDragLeaveObjective.bind(this));
+        li.addEventListener('drop', this._onDropObjective.bind(this));
+    }
+  }
+
+
+
+  _onDragStartObjective(event) {
+      // Allow drag only if handle or LI is target
+      if (event.target.tagName === "INPUT" || event.target.tagName === "BUTTON") {
+         return; 
+      }
+      
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", JSON.stringify({
+          type: "Objective",
+          index: Number(event.currentTarget.dataset.index)
+      }));
+      console.log("PQT | Drag Start Objective", event.currentTarget.dataset.index);
+  }
+
+  _onDragOverObjective(event) {
+      const li = event.currentTarget;
+      event.preventDefault();
+      event.stopPropagation();
+      
+      event.dataTransfer.dropEffect = "move";
+      
+      li.classList.add('drag-over');
+  }
+  
+  _onDragLeaveObjective(event) {
+      const li = event.currentTarget;
+      li.classList.remove('drag-over');
+  }
+
+  async _onDropObjective(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const li = event.currentTarget;
+      li.classList.remove('drag-over');
+
+      const dataStr = event.dataTransfer.getData("text/plain");
+      if (!dataStr) {
+          console.warn("PQT | No data in drop");
+          return;
+      }
+      
+      try {
+          const data = JSON.parse(dataStr);
+          if (data.type !== "Objective") return;
+
+          const fromIndex = data.index;
+          const toIndex = Number(li.dataset.index);
+
+          console.log(`PQT | Dropping Objective ${fromIndex} -> ${toIndex}`);
+
+          if (fromIndex === toIndex) return;
+
+          await this.submit();
+
+          const flagData = this.document.getFlag(QuestManager.ID, QuestManager.FLAG) || {};
+          let objectives = flagData.objectives || [];
+          // Ensure array
+          if (!Array.isArray(objectives)) objectives = Object.values(objectives);
+
+          // Validation
+          if (fromIndex < 0 || fromIndex >= objectives.length) return;
+
+          // Move
+          const item = objectives.splice(fromIndex, 1)[0];
+          objectives.splice(toIndex, 0, item);
+
+          await this.document.setFlag(QuestManager.ID, QuestManager.FLAG, { objectives });
+          await this._renderAndPreserveScroll();
+
+      } catch (e) {
+          console.error("PQT | Drop Error", e);
+      }
   }
 }
