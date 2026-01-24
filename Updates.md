@@ -1,5 +1,9 @@
 # Update Log
 
+## v1.3.3
+
+- **Fix**: **CSS Compatibility**: Scoped all internal CSS rules to the Quest Tracker to prevent styling conflicts with other modules (e.g., Character Sheets) and the core UI.
+
 ## v1.3.2
 
 - **Fix**: **Objective Permissions**: Players (observers) can no longer mistakenly edit objectives.
