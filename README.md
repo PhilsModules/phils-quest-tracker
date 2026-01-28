@@ -3,7 +3,7 @@
 # Phil's Quest Tracker 📜
 
 ![Foundry v13 Compatible](https://img.shields.io/badge/Foundry-v13-brightgreen?style=flat-square) ![Foundry v12 Compatible](https://img.shields.io/badge/Foundry-v12-green?style=flat-square) ![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)
-[![Version](https://img.shields.io/badge/Version-1.3.3-orange?style=flat-square)](https://github.com/PhilsModules/phils-quest-tracker/releases) [![Patreon](https://img.shields.io/badge/SUPPORT-Patreon-ff424d?style=flat-square&logo=patreon)](https://www.patreon.com/PhilsModules)
+[![Version](https://img.shields.io/badge/Version-1.3.4-blue?style=flat-square)](https://github.com/PhilsModules/phils-quest-tracker/releases) [![Patreon](https://img.shields.io/badge/SUPPORT-Patreon-ff424d?style=flat-square&logo=patreon)](https://www.patreon.com/PhilsModules)
 
 <br>
 
@@ -20,15 +20,6 @@ _Verwalte deine Abenteuer mit einem wunderschönen Quest Log im Modern Dark UI D
 <br>
 
 ---
-
-
-<br>
-
-<div align="center">
-<img src="https://github.com/PhilsModules/phils-quest-tracker/blob/main/Cover.png" alt="Preview" width="800">
-</div>
-
-<br>
 
 <br>
 
@@ -66,6 +57,14 @@ Designed to seamlessly integrate with your world, offering a sleek Modern Dark U
 - **Always Visible:** The quest is visible to players immediately (if permissions allow).
 - **Visible from Start Date:** The quest remains hidden (Observer permissions revoked) until the world clock reaches the Start Date.
 - **GM Only:** The quest is strictly for GM notes and tracking; players never see it.
+
+### 🎮 Macro Support
+
+You can create a **Script Macro** to toggle the Quest Log using the following command:
+
+```javascript
+PhilsQuestTracker.toggleQuestLog();
+```
 
 ## 📦 Installation
 
@@ -127,6 +126,14 @@ Phil's Quest Tracker wurde entwickelt um sich nahtlos in deine Welt einzufügen.
 - **Sichtbar ab Startdatum:** Die Quest bleibt verborgen (Beobachter Status entzogen) bis die Weltzeit das Startdatum erreicht.
 - **Nur GM:** Die Quest dient rein als Notiz für den Spielleiter und Spieler sehen sie niemals.
 
+### 🎮 Makro Unterstützung
+
+Du kannst ein **Skript Makro** erstellen um das Quest Log zu öffnen/schließen:
+
+```javascript
+PhilsQuestTracker.toggleQuestLog();
+```
+
 ## 📦 Installation
 
 1.  Öffne Foundry VTT.
@@ -171,7 +178,3 @@ See `LICENSE` file for details.
     <br><br>
     <p><i>Made with ❤️ for the Foundry VTT Community</i></p>
 </div>
-
-
-
-
