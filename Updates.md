@@ -1,3 +1,24 @@
+## v1.6.0 - Journal Entries & Pages as Quest Givers
+
+- **Feature**: Quest Givers can now be **Journal Entries** or **Journal Entry Pages** in addition to Actors!
+- **Drag & Drop**: GMs can drag and drop Actors, Journal Entries, or Journal Entry Pages directly into the Quest Giver section.
+- **Interactive Sheet Link**: Clicking on any Quest Giver card in the Quest Sheet or Quest Log now directly opens that entity's sheet (`ActorSheet` or `JournalSheet`).
+- **UI Polish**: Added clean icon badges to distinguish Actor quest givers from Journal Entry and Page quest givers.
+- **Fix**: Restricted drop-zone permissions so players can no longer drag items onto quests created by the GM, preventing desync.
+- **Fix**: Added missing translation key `PQT.Message.QuestRequested` for player quest creation notifications.
+
+## v1.5.0 - Per-User Quest Visibility
+
+- **Feature**: Reintroduced per-user and per-character quest visibility! You can now assign quests to specific players or characters via the new "Selected Players/Actors" visibility option.
+- **UI/UX**: Added an elegant, interactive pill-list interface for selecting users and characters directly in the Quest Sheet header.
+- **UI/UX**: Improved header layout responsiveness. The date and visibility controls now gracefully wrap on narrow windows, ensuring the export button is never pushed out of bounds.
+
+## v1.4.1
+
+- **Feature**: Added a new GM setting to dynamically size the Description box. It no longer has a fixed minimum height and will automatically adjust to its content.
+- **Feature**: Added a new GM setting to display the Objectives section above the Description section in the Quest Sheet overview tab.
+- **Security**: Added a new GM setting to control whether players are allowed to drag reward items from the Quest Sheet into their character sheets. By default, players can no longer drag items unless this setting is explicitly enabled.
+
 ## v1.4.0 – Architecture Overhaul: No More Journal Entries
 
 > ⚠️ **Automatic Migration:** On first launch after this update, all existing quests are automatically migrated to the new storage system. No manual action required. Old journal entries are cleaned up afterwards.
