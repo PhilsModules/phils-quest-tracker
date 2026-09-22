@@ -1,3 +1,30 @@
+## v2.0.0 - Collaborative Quests, Personal Privacy & Calendar Deadlines
+
+- **Collaborative Group Adventures**: Main Quests and Side Quests serve as joint adventures for the whole party. When players embark on their own adventures or pick up jobs, party members can now collaboratively organize, update quest notes, and track milestones together.
+- **Job Board & Available Quests**: Adventurers can now freely accept quests marked as *Available* from notice boards, transition them to *Active*, mark them as *Completed* or *Failed*, or place them back on the board.
+- **Dual Date Tracking & Calendar Deadlines**: Quests now feature distinct **Start Dates** and **End Dates / Deadlines** with an integrated calendar picker. When synchronized with the Day/Night Cycle calendar, both the start date and the deadline appear as linked calendar milestones with custom badges in the Quest Log.
+- **Optional Start & Deadline Times**: Adventurers and Gamemasters can now specify an optional time (e.g. `14:00` or `08:30`) for both start dates and deadlines, or use the convenient world clock button to stamp the current in-game time with a single click. Times synchronize seamlessly to the calendar and display alongside dates.
+- **Seamless Automatic Calendar Synchronization**: Quests with a start date or deadline now synchronize automatically with the Day/Night Cycle calendar. There is no need to remember a separate sync checkbox—simply picking or entering dates immediately registers the milestones on your calendar, while clearing them removes them cleanly.
+- **Adventurer Calendar Privileges**: Players with editing access can set start dates, deadlines, and times directly on their group or personal quests.
+- **Strict Personal Quest & Calendar Privacy**: Personal Quests remain strictly confidential between the owning adventurer and the Gamemaster. When synchronized with the calendar, personal quest dates and deadlines appear exclusively on the Gamemaster's and the assigned adventurer's calendar, completely hidden from other party members.
+- **Dedicated Gamemaster Collaboration Controls**: Gamemasters can cleanly define editing permissions for any quest right from the quest window (Gamemaster Only, Entire Party, or Selected Adventurers) and grant permission for players to manage rewards and gold.
+- **Configurable Quest Creation Permissions**: A new Gamemaster setting lets you decide whether players are allowed to create and designate Main Quests, or whether player-created quests are restricted strictly to Side Quests and Personal Quests.
+- **Interactive Objective Checkboxes**: Party members can directly check off completed objectives on active quests without altering the Gamemaster's lore or descriptions.
+- **Gamemaster Chat Whisper Audit**: Whenever a player modifies a quest, the Gamemaster receives a private whisper message detailing what changed, keeping the Gamemaster fully informed.
+- **Custom Quest Colors & Custom Symbols**: Each individual quest can now be customized with its own accent color and symbol. Custom colors adorn the quest window and quest cards, and synchronize directly to the Day/Night Cycle calendar, while custom symbols and icons can be chosen from your world files or icon library.
+- **Calendar Harmony**: Synchronized quests now display distinctive, atmospheric colors in the Day/Night Cycle calendar (Warm Gold for Main Quests, Polished Silver for Side Quests, Amethyst Purple for Personal Quests, and Crimson for Gamemaster Secrets, or your custom quest color).
+- **Full Backward Compatibility**: All existing quest records and saved adventures are completely preserved and seamlessly integrate with the new collaboration tools.
+
+## v1.6.2 - Localization Fix
+
+- **Fix**: Resolved an issue where the language file failed to load in Foundry V14, causing raw text keys to be displayed throughout the Quest Log UI instead of proper translated text.
+
+## v1.6.1 - Dialog & Localization Polish
+
+- **Fix**: Resolved an issue where deleting a quest from within its edit window displayed un-localized raw text keys in the confirmation dialog.
+- **Localization**: Audited and polished all dialogs, tooltips, notification messages, and window titles for complete English and German support.
+- **UI Polish**: Uncategorized quests are now cleanly grouped under the *Misc* category in the Quest Log.
+
 ## v1.6.0 - Journal Entries & Pages as Quest Givers
 
 - **Feature**: Quest Givers can now be **Journal Entries** or **Journal Entry Pages** in addition to Actors!
